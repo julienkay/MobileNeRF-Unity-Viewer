@@ -130,9 +130,6 @@ public class MobileNeRFImporter {
     }
 
     private const string BASE_URL = "https://storage.googleapis.com/jax3d-public/projects/mobilenerf/mobilenerf_viewer_mac/";
-    //"https://storage.googleapis.com/jax3d-public/projects/mobilenerf/mobilenerf_viewer_mac/zdeferred_syn_mac.html?obj=chair";
-    //https://storage.googleapis.com/jax3d-public/projects/mobilenerf/mobilenerf_viewer_mac/chair_mac/mlp.json
-
     private const string BASE_FOLDER = "Assets/MobileNeRF Data/";
 
     private static string GetBasePath(string objName) {
@@ -156,6 +153,7 @@ public class MobileNeRFImporter {
         Directory.CreateDirectory(Path.GetDirectoryName(path));
         return path;
     }
+    
     private static string GetWeightsAssetPath(string objName, int i) {
         string path = $"{GetBasePath(objName)}/MLP/weightsTex{i}.asset";
         Directory.CreateDirectory(Path.GetDirectoryName(path));
@@ -352,8 +350,6 @@ public class MobileNeRFImporter {
         string shaderAssetPath = GetShaderAssetPath(objName);
         File.WriteAllText(shaderAssetPath, shaderSource);
         AssetDatabase.Refresh();
-
-        Shader shader = AssetDatabase.LoadAssetAtPath<Shader>(shaderAssetPath);
     }
 
     private static void CreateWeightTextures(string objName, Mlp mlp) {

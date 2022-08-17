@@ -115,7 +115,6 @@ public static class ViewDependenceNetworkShader {
                 diffuse1.a = diffuse1.a*2.0-1.0;
                 rayDir.a = rayDir.a*2.0-1.0;
 
-                //pc_FragColor.rgb  = diffuse1.rgb;
                 fixed4 fragColor;
                 fragColor.rgb = evaluateNetwork(diffuse0,diffuse1,rayDir);
                 fragColor.a = 1.0;

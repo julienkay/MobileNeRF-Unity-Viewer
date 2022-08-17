@@ -57,11 +57,6 @@ public static class WebRequestAsyncUtility {
     /// </summary>
     public class WebRequestSimpleAsync {
 
-        /// <summary>
-        /// Performs a WebRequest with the given URL. The response is expected to be a JSON serialized
-        /// object of type <typeparamref name="T"/> and is automatically being deserialized and returned.
-        /// </summary>
-        /// <typeparam name="T">the type that this web request returns.</typeparam>
         public static async Task<string> SendWebRequestAsync(string url, HTTPVerb verb = HTTPVerb.GET, string postData = null, params Tuple<string, string>[] requestHeaders) {
             UnityWebRequest wr = GetRequest(url, verb, postData, requestHeaders);
             if (wr == null) {
@@ -102,11 +97,7 @@ public static class WebRequestAsyncUtility {
     /// WebRequest for binary data.
     /// </summary>
     public class WebRequestBinaryAsync {
-        /// <summary>
-        /// Performs a WebRequest with the given URL. The response is expected to be a JSON serialized
-        /// object of type <typeparamref name="T"/> and is automatically being deserialized and returned.
-        /// </summary>
-        /// <typeparam name="T">the type that this web request returns.</typeparam>
+
         public static async Task<byte[]> SendWebRequestAsync(string url, HTTPVerb verb = HTTPVerb.GET, string postData = null, params Tuple<string, string>[] requestHeaders) {
             UnityWebRequest wr = GetRequest(url, verb, postData, requestHeaders);
             if (wr == null) {
