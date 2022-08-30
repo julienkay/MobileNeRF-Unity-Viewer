@@ -14,7 +14,16 @@ public class MobileNeRFImporter {
     private static readonly string DownloadTitle = "Downloading Assets";
     private static readonly string DownloadInfo = "Downloading Assets for ";
     private static readonly string DownloadAllTitle = "Downloading All Assets";
-    private static readonly string DownloadAllMessage = "You are about to download all the demo scenes from the MobileNeRF paper!\nDownloading/Processing might take a few minutes and take ~3.3GB of disk space.\n\nClick 'OK', if you wish to continue.";
+    private static readonly string DownloadAllMsg = "You are about to download all the demo scenes from the MobileNeRF paper!\nDownloading/Processing might take a few minutes and take ~3.3GB of disk space.\n\nClick 'OK', if you wish to continue.";
+    private static readonly string FolderTitle = "Select folder with MobileNeRF Source Files";
+    private static readonly string FolderExistsTitle = "Folder already exists";
+    private static readonly string FolderExistsMsg = "A folder for this asset already exists in the Unity project. Overwrite?";
+    private static readonly string OK = "OK";
+    private static readonly string SwitchAxisTitle = "Switch y-z axis?";
+    private static readonly string SwitchAxisMsg = "Some scenes (360° scenes / unbounded 360° scenes) require switching the y and z axis in the shader. With forward-facing scenes this is not necessary. Do you want to switch the y and z axis?";
+    private static readonly string Switch = "Switch";
+    private static readonly string NoSwitch = "Don't Switch";
+    private static readonly string ImportErrorTitle = "Error importing MobileNeRF assets";
 
     [MenuItem("MobileNeRF/Asset Downloads/-- Synthetic 360° scenes --", false, -1)]
     public static void Separator0() { }
@@ -37,97 +46,128 @@ public class MobileNeRFImporter {
 
     [MenuItem("MobileNeRF/Asset Downloads/Download All", false, -20)]
     public static async void DownloadAllAssets() {
-        if (!EditorUtility.DisplayDialog(DownloadAllTitle, DownloadAllMessage, "OK")) {
+        if (!EditorUtility.DisplayDialog(DownloadAllTitle, DownloadAllMsg, "OK")) {
             return;
         }
 
         foreach (var scene in (MNeRFScene[])Enum.GetValues(typeof(MNeRFScene))) {
-            await DownloadAssets(scene);
+            if (scene.Equals(MNeRFScene.Custom)) {
+                continue;
+            }
+            await ImportDemoSceneAsync(scene);
         }
+    }
+
+    [MenuItem("MobileNeRF/Import from disk", false, 0)]
+    public static void ImportAssetsFromDisk() {
+        // select folder with custom data
+        string path = EditorUtility.OpenFolderPanel(FolderTitle, "", "");
+        if (string.IsNullOrEmpty(path) || !Directory.Exists(path)) {
+            return;
+        }
+
+        // ask whether to overwrite existing folder
+        string objName = new DirectoryInfo(path).Name;
+        if (Directory.Exists(GetBasePath(objName))) {
+            if (!EditorUtility.DisplayDialog(FolderExistsTitle, FolderExistsMsg, OK)) {
+                return;
+            }
+        }
+
+        // ask for axis siwtch behaviour
+        if (EditorUtility.DisplayDialog(SwitchAxisTitle, SwitchAxisMsg, Switch, NoSwitch)) {
+            SwizzleAxis = true;
+        } else {
+            SwizzleAxis = false;
+        }
+
+        ImportCustomScene(path);
     }
 
 #pragma warning disable CS4014
     [MenuItem("MobileNeRF/Asset Downloads/Chair", false, 0)]
     public static void DownloadChairAssets() {
-        ImportAssetsAsync("chair");
+        ImportDemoSceneAsync(MNeRFScene.Chair);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Drums", false, 0)]
     public static void DownloadDrumsAssets() {
-        ImportAssetsAsync("drums");
+        ImportDemoSceneAsync(MNeRFScene.Drums);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Ficus", false, 0)]
     public static void DownloadFicusAssets() {
-        ImportAssetsAsync("ficus");
+        ImportDemoSceneAsync(MNeRFScene.Ficus);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Hotdog", false, 0)]
     public static void DownloadHotdogAssets() {
-        ImportAssetsAsync("hotdog");
+        ImportDemoSceneAsync(MNeRFScene.Hotdog);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Lego", false, 0)]
     public static void DownloadLegoAssets() {
-        ImportAssetsAsync("lego");
+        ImportDemoSceneAsync(MNeRFScene.Lego);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Materials", false, 0)]
     public static void DownloadMaterialsAssets() {
-        ImportAssetsAsync("materials");
+        ImportDemoSceneAsync(MNeRFScene.Materials);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Mic", false, 0)]
     public static void DownloadMicAssets() {
-        ImportAssetsAsync("mic");
+        ImportDemoSceneAsync(MNeRFScene.Mic);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Ship", false, 0)]
     public static void DownloadShipsAssets() {
-        ImportAssetsAsync("ship");
+        ImportDemoSceneAsync(MNeRFScene.Ship);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Fern", false, 50)]
     public static void DownloadFernAssets() {
-        ImportAssetsAsync("fern");
+        ImportDemoSceneAsync(MNeRFScene.Fern);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Flower", false, 50)]
     public static void DownloadFlowerAssets() {
-        ImportAssetsAsync("flower");
+        ImportDemoSceneAsync(MNeRFScene.Flower);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Fortress", false, 50)]
     public static void DownloadFortressAssets() {
-        ImportAssetsAsync("fortress");
+        ImportDemoSceneAsync(MNeRFScene.Fortress);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Horns", false, 50)]
     public static void DownloadHornsAssets() {
-        ImportAssetsAsync("horns");
+        ImportDemoSceneAsync(MNeRFScene.Horns);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Leaves", false, 50)]
     public static void DownloadLeavesAssets() {
-        ImportAssetsAsync("leaves");
+        ImportDemoSceneAsync(MNeRFScene.Leaves);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Orchids", false, 50)]
     public static void DownloadOrchidsAssets() {
-        ImportAssetsAsync("orchids");
+        ImportDemoSceneAsync(MNeRFScene.Orchids);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Room", false, 50)]
     public static void DownloadRoomAssets() {
-        ImportAssetsAsync("room");
+        ImportDemoSceneAsync(MNeRFScene.Room);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Trex", false, 50)]
     public static void DownloadTrexAssets() {
-        ImportAssetsAsync("trex");
+        ImportDemoSceneAsync(MNeRFScene.Trex);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Bicycle", false, 100)]
     public static void DownloadBicycleAssets() {
-        ImportAssetsAsync("bicycle");
+        ImportDemoSceneAsync(MNeRFScene.Bicycle);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Garden Vase", false, 100)]
     public static void DownloadGardenAssets() {
-        ImportAssetsAsync("gardenvase");
+        ImportDemoSceneAsync(MNeRFScene.Gardenvase);
     }
     [MenuItem("MobileNeRF/Asset Downloads/Stump", false, 100)]
     public static void DownloadStumpAssets() {
-        ImportAssetsAsync("stump");
+        ImportDemoSceneAsync(MNeRFScene.Stump);
     }
 #pragma warning restore CS4014
 
-    private static async Task DownloadAssets(MNeRFScene scene) {
-        await ImportAssetsAsync(scene.ToString().ToLower());
-    }
+    /// <summary>
+    /// Some scenes require switching the y and z axis in the shader.
+    /// For custom scenes this tracks whether which one should be used.
+    /// </summary>
+    public static bool SwizzleAxis = false;
 
     private const string BASE_URL = "https://storage.googleapis.com/jax3d-public/projects/mobilenerf/mobilenerf_viewer_mac/";
     private const string BASE_FOLDER = "Assets/MobileNeRF Data/";
@@ -136,16 +176,16 @@ public class MobileNeRFImporter {
         return $"{BASE_FOLDER}{objName}";
     }
 
-    private static string GetMLPUrl(string objName) {
-        return $"{BASE_URL}{objName}_mac/mlp.json";
+    private static string GetMLPUrl(MNeRFScene scene) {
+        return $"{BASE_URL}{scene.String()}_mac/mlp.json";
     }
 
-    private static string GetPNGUrl(string objName, int shapeNum, int featureNum) {
-        return $"{BASE_URL}{objName}_mac/shape{shapeNum}.pngfeat{featureNum}.png";
+    private static string GetPNGUrl(MNeRFScene scene, int shapeNum, int featureNum) {
+        return $"{BASE_URL}{scene.String()}_mac/shape{shapeNum}.pngfeat{featureNum}.png";
     }
 
-    private static string GetOBJUrl(string objName, int i, int j) {
-        return $"{BASE_URL}{objName}_mac/shape{i}_{j}.obj";
+    private static string GetOBJUrl(MNeRFScene scene, int i, int j) {
+        return $"{BASE_URL}{scene.String()}_mac/shape{i}_{j}.obj";
     }
 
     private static string GetMLPAssetPath(string objName) {
@@ -189,49 +229,154 @@ public class MobileNeRFImporter {
         return path;
     }
 
-    private static async Task ImportAssetsAsync(string objName) {
+    /// <summary>
+    /// Creates Unity assets for the given MobileNeRF assets on disk.
+    /// </summary>
+    /// <param name="path">The path to the folder with the MobileNeRF assets (OBJs, PNGs, mlp.json)</param>
+    private static void ImportCustomScene(string path) {
+        string objName = new DirectoryInfo(path).Name;
+
+        Mlp mlp = CopyMLPFromPath(path);
+        if (mlp == null) {
+            return;
+        }
+        if (!CopyPNGsFromPath(path, mlp)) {
+            return;
+        }
+        if (!CopyOBJsFromPath(path, mlp)) {
+            return;
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
+        ProcessAssets(objName);
+    }
+
+    /// <summary>
+    /// Downloads the given MobileNeRF demo scene and
+    /// creates the Unity assets necessary to display it.
+    /// </summary>
+    private static async Task ImportDemoSceneAsync(MNeRFScene scene) {
+        string objName = scene.String();
+
         EditorUtility.DisplayProgressBar(DownloadTitle, $"{DownloadInfo}'{objName}'...", 0.1f);
-        var mlp = await DownloadMlpAsync(objName);
+        Mlp mlp = await DownloadMlpAsync(scene);
+
         EditorUtility.DisplayProgressBar(DownloadTitle, $"{DownloadInfo}'{objName}'...", 0.2f);
 
-        CreateShader(objName, mlp);
-        EditorUtility.DisplayProgressBar(DownloadTitle, $"{DownloadInfo}'{objName}'...", 0.3f);
-
-        CreateWeightTextures(objName, mlp);
-        EditorUtility.DisplayProgressBar(DownloadTitle, $"{DownloadInfo}'{objName}'...", 0.4f);
-
-        await DonloadPNGsAsync(objName, mlp);
+        await DonloadPNGsAsync(scene, mlp);
         EditorUtility.DisplayProgressBar(DownloadTitle, $"{DownloadInfo}'{objName}'...", 0.6f);
 
-        await DownloadOBJsAsync(objName, mlp);
+        await DownloadOBJsAsync(scene, mlp);
         EditorUtility.DisplayProgressBar(DownloadTitle, $"{DownloadInfo}'{objName}'...", 0.8f);
-
-        CreatePrefab(objName, mlp);
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
 
         EditorUtility.ClearProgressBar();
+
+        ProcessAssets(objName);
     }
 
-    private static async Task<Mlp> DownloadMlpAsync(string objName) {
-        string mlpJson = await SimpleHttpRequestAsync(GetMLPUrl(objName), HTTPVerb.GET);
+    /// <summary>
+    /// Set specific import settings on OBJs/PNGs.
+    /// Creates Weight Textures, Materials and Shader from MLP data.
+    /// Creates a convenient prefab for the MobileNeRF object.
+    /// </summary>
+    private static void ProcessAssets(string objName) {
+        Mlp mlp = GetMlp(objName);
+        CreateShader(objName, mlp);
+        CreateWeightTextures(objName, mlp);
+        // PNGs are configured in PNGImportProcessor.cs
+        ProcessOBJs(objName, mlp);
+        CreatePrefab(objName, mlp);
+    }
+
+    /// <summary>
+    /// Looks for a mlp.json at <paramref name="path"/> and imports it.
+    /// </summary>
+    private static Mlp CopyMLPFromPath(string path) {
+        string objName = new DirectoryInfo(path).Name;
+
+        string[] mlpPaths = Directory.GetFiles(path, "*.json", SearchOption.AllDirectories);
+        if (mlpPaths.Length > 1) {
+            EditorUtility.DisplayDialog(ImportErrorTitle, "Multiple mlp.json files found", OK);
+            return null;
+        }
+        if (mlpPaths.Length <= 0) {
+            EditorUtility.DisplayDialog(ImportErrorTitle, "No mlp.json files found", OK);
+            return null;
+        }
+
+        string mlpJson = File.ReadAllText(mlpPaths[0]);
         TextAsset mlpJsonTextAsset = new TextAsset(mlpJson);
         AssetDatabase.CreateAsset(mlpJsonTextAsset, GetMLPAssetPath(objName));
-
         Mlp mlp = JsonConvert.DeserializeObject<Mlp>(mlpJson);
         return mlp;
     }
 
-    private static async Task DonloadPNGsAsync(string objName, Mlp mlp) {
-        int gTotalPNGs = mlp.ObjNum * 2;
+    /// <summary>
+    /// Downloads the MLP for the given MobileNeRF demo scene.
+    /// </summary>
+    private static async Task<Mlp> DownloadMlpAsync(MNeRFScene scene) {
+        string mlpJson = await SimpleHttpRequestAsync(GetMLPUrl(scene), HTTPVerb.GET);
+        TextAsset mlpJsonTextAsset = new TextAsset(mlpJson);
+        AssetDatabase.CreateAsset(mlpJsonTextAsset, GetMLPAssetPath(scene.String()));
+        return JsonConvert.DeserializeObject<Mlp>(mlpJson);
+    }
+
+    private static Mlp GetMlp(string objName) {
+        string mlpAssetPath = GetMLPAssetPath(objName);
+        string mlpJson = AssetDatabase.LoadAssetAtPath<TextAsset>(mlpAssetPath).text;
+        return JsonConvert.DeserializeObject<Mlp>(mlpJson);
+    }
+
+    /// <summary>
+    /// Looks for and imports all feature textures for a given MobileNeRF scene.
+    /// </summary>
+    private static bool CopyPNGsFromPath(string path, Mlp mlp) {
+        string objName = new DirectoryInfo(path).Name;
+        int totalPNGs = mlp.ObjNum * 2;
+
+        string[] pngPaths = Directory.GetFiles(path, "shape*.pngfeat*.png", SearchOption.TopDirectoryOnly);
+        if (pngPaths.Length != totalPNGs) {
+            EditorUtility.DisplayDialog(ImportErrorTitle, $"Invalid number of feature textures found. Expected: {totalPNGs}. Actual: {pngPaths.Length}", OK);
+            return false;
+        }
 
         for (int i = 0; i < mlp.ObjNum; i++) {
-            string feat0url = GetPNGUrl(objName, i, 0);
-            string feat1url = GetPNGUrl(objName, i, 1);
+            for (int j = 0; j < 2; j++) {
+                string featPath = Path.Combine(path, $"shape{i}.pngfeat{j}.png");
+                string featAssetPath = GetFeatureTextureAssetPath(objName, i, j);
 
-            string feat0AssetPath = GetFeatureTextureAssetPath(objName, i, 0);
-            string feat1AssetPath = GetFeatureTextureAssetPath(objName, i, 1);
+                if (!File.Exists(featPath)) {
+                    EditorUtility.DisplayDialog(ImportErrorTitle, $"Required texture not found: {featPath}", OK);
+                    return false;
+                }
+
+                try {
+                    File.Copy(featPath, featAssetPath, overwrite: true);
+                } catch (Exception e) {
+                    Debug.LogException(e);
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Downloads the feature textures for the given MobileNeRF demo scene.
+    /// </summary>
+    private static async Task DonloadPNGsAsync(MNeRFScene scene, Mlp mlp) {
+        for (int i = 0; i < mlp.ObjNum; i++) {
+            string feat0url = GetPNGUrl(scene, i, 0);
+            string feat1url = GetPNGUrl(scene, i, 1);
+
+            string feat0AssetPath = GetFeatureTextureAssetPath(scene.String(), i, 0);
+            string feat1AssetPath = GetFeatureTextureAssetPath(scene.String(), i, 1);
 
             if (File.Exists(feat0AssetPath) && File.Exists(feat1AssetPath)) {
                 continue;
@@ -242,35 +387,51 @@ public class MobileNeRFImporter {
 
             byte[] feat1png = await BinaryHttpRequestAsync(feat1url, HTTPVerb.GET);
             File.WriteAllBytes(feat1AssetPath, feat1png);
-
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-
-            ApplyTextureSettings(feat0AssetPath);
-            AssetDatabase.ImportAsset(feat0AssetPath);
-
-            ApplyTextureSettings(feat1AssetPath);
-            AssetDatabase.ImportAsset(feat1AssetPath);
-
-            AssetDatabase.SaveAssets();
         }
     }
 
-    private static void ApplyTextureSettings(string textureAssetPath) {
-        TextureImporter textureImporter = AssetImporter.GetAtPath(textureAssetPath) as TextureImporter;
-        textureImporter.maxTextureSize = 4096;
-        textureImporter.textureCompression = TextureImporterCompression.Uncompressed;
-        textureImporter.sRGBTexture = false;
-        textureImporter.filterMode = FilterMode.Point;
-        textureImporter.mipmapEnabled = false;
-        textureImporter.alphaIsTransparency = true;
-    }
+    /// <summary>
+    /// Looks for and imports all 3D models for a given MobileNeRF scene.
+    /// </summary>
+    private static bool CopyOBJsFromPath(string path, Mlp mlp) {
+        string objName = new DirectoryInfo(path).Name;
+        int totalOBJs = mlp.ObjNum * 8;
 
-    private static async Task DownloadOBJsAsync(string objName, Mlp mlp) {
+        string[] objPaths = Directory.GetFiles(path, "shape*_*.obj", SearchOption.TopDirectoryOnly);
+        if (objPaths.Length != totalOBJs) {
+            EditorUtility.DisplayDialog(ImportErrorTitle, $"Invalid number of 3D models found. Expected: {mlp.ObjNum}. Actual: {objPaths.Length}", OK);
+            return false;
+        }
+
         for (int i = 0; i < mlp.ObjNum; i++) {
             for (int j = 0; j < 8; j++) {
-                string objUrl = GetOBJUrl(objName, i, j);
+                string objPath = Path.Combine(path, $"shape{i}_{j}.obj");
                 string objAssetPath = GetObjAssetPath(objName, i, j);
+
+                if (!File.Exists(objPath)) {
+                    EditorUtility.DisplayDialog(ImportErrorTitle, $"Required .obj file not found: {objPath}", OK);
+                    return false;
+                }
+                try {
+                    File.Copy(objPath, objAssetPath, overwrite: true);
+                } catch (Exception e) {
+                    Debug.LogException(e);
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Downloads the 3D models for the given MobileNeRF demo scene.
+    /// </summary>
+    private static async Task DownloadOBJsAsync(MNeRFScene scene, Mlp mlp) {
+        for (int i = 0; i < mlp.ObjNum; i++) {
+            for (int j = 0; j < 8; j++) {
+                string objUrl = GetOBJUrl(scene, i, j);
+                string objAssetPath = GetObjAssetPath(scene.String(), i, j);
 
                 if (File.Exists(objAssetPath)) {
                     continue;
@@ -278,8 +439,16 @@ public class MobileNeRFImporter {
 
                 byte[] objData = await BinaryHttpRequestAsync(objUrl, HTTPVerb.GET);
                 File.WriteAllBytes(objAssetPath, objData);
-                AssetDatabase.Refresh();
+            }
+        }
+    }
 
+    private static void ProcessOBJs(string objName, Mlp mlp) {
+        for (int i = 0; i < mlp.ObjNum; i++) {
+            for (int j = 0; j < 8; j++) {
+                string objAssetPath = GetObjAssetPath(objName, i, j);
+
+                // model settings - one material per shape (each has individual feature textures)
                 ModelImporter modelImport = AssetImporter.GetAtPath(objAssetPath) as ModelImporter;
                 modelImport.materialLocation = ModelImporterMaterialLocation.External;
                 modelImport.materialName = ModelImporterMaterialName.BasedOnModelNameAndMaterialName;
@@ -291,15 +460,16 @@ public class MobileNeRFImporter {
                 string materialAssetPath = GetDefaultMaterialAssetPath(objName, i, j);
                 Material material = AssetDatabase.LoadAssetAtPath<Material>(materialAssetPath);
                 material.shader = mobileNeRFShader;
-                //material.name = $"defaultMat_{i}_{j}";
 
+                // assign weight textures
                 Texture2D weightsTexZero = AssetDatabase.LoadAssetAtPath<Texture2D>(GetWeightsAssetPath(objName, 0));
-                Texture2D weightsTexOne  = AssetDatabase.LoadAssetAtPath<Texture2D>(GetWeightsAssetPath(objName, 1));
-                Texture2D weightsTexTwo  = AssetDatabase.LoadAssetAtPath<Texture2D>(GetWeightsAssetPath(objName, 2));
+                Texture2D weightsTexOne = AssetDatabase.LoadAssetAtPath<Texture2D>(GetWeightsAssetPath(objName, 1));
+                Texture2D weightsTexTwo = AssetDatabase.LoadAssetAtPath<Texture2D>(GetWeightsAssetPath(objName, 2));
                 material.SetTexture("weightsZero", weightsTexZero);
                 material.SetTexture("weightsOne", weightsTexOne);
                 material.SetTexture("weightsTwo", weightsTexTwo);
 
+                // assign feature textures
                 string feat0AssetPath = GetFeatureTextureAssetPath(objName, i, 0);
                 string feat1AssetPath = GetFeatureTextureAssetPath(objName, i, 1);
                 Texture2D featureTex1 = AssetDatabase.LoadAssetAtPath<Texture2D>(feat0AssetPath);
@@ -307,13 +477,9 @@ public class MobileNeRFImporter {
                 material.SetTexture("tDiffuse0x", featureTex1);
                 material.SetTexture("tDiffuse1x", featureTex2);
 
+                // assign material to renderer
                 GameObject obj = AssetDatabase.LoadAssetAtPath<GameObject>(objAssetPath);
                 obj.GetComponentInChildren<MeshRenderer>().sharedMaterial = material;
-
-                /*string defaultMaterialAssetPath = $"{GetBasePath(objName)}/Materials/{material.name}.mat";
-                AssetDatabase.CreateAsset(material, defaultMaterialAssetPath);
-                AssetDatabase.SaveAssets();*/
-
             }
         }
     }
@@ -429,84 +595,5 @@ public class MobileNeRFImporter {
     }
     private static async Task<byte[]> BinaryHttpRequestAsync(string url, HTTPVerb verb, string postData = null, params Tuple<string, string>[] requestHeaders) {
         return await WebRequestBinaryAsync.SendWebRequestAsync(url, verb, postData, requestHeaders);
-    }
-}
-
-// MobileNeRFs don't use normals, so we disable trying to read them when importing
-// .obj files (which happens by default) to prevent throwing warnings.
-public class ObjImportProcessor : AssetPostprocessor {
-    private void OnPreprocessModel() {
-        if (assetPath.Contains(".obj")) {
-            ModelImporter modelImporter = assetImporter as ModelImporter;
-            modelImporter.importNormals = ModelImporterNormals.None;
-        }
-    }
-}
-
-public enum MNeRFScene {
-    Chair,
-    Drums,
-    Ficus,
-    Hotdog,
-    Lego,
-    Materials,
-    Mic,
-    Ship,
-    Fern,
-    Flower,
-    Fortress,
-    Horns,
-    Leaves,
-    Orchids,
-    Room,
-    Trex,
-    Bicycle,
-    Gardenvase,
-    Stump
-}
-
-public static class MNeRFSceneExtensions {
-
-    public static string String(this MNeRFScene scene) {
-        return scene.ToString().ToLower();
-    }
-
-    public static MNeRFScene ToEnum(string value) {
-        return (MNeRFScene)Enum.Parse(typeof(MNeRFScene), value, true);
-    }
-
-    public static string GetAxisSwizzleString(this MNeRFScene scene) {
-        switch (scene) {
-            case MNeRFScene.Chair:
-            case MNeRFScene.Drums:
-            case MNeRFScene.Ficus:
-            case MNeRFScene.Hotdog:
-            case MNeRFScene.Lego:
-            case MNeRFScene.Materials:
-            case MNeRFScene.Mic:
-            case MNeRFScene.Ship:
-                // Synthetic 360° scenes
-                return "o.rayDirection.xz = -o.rayDirection.xz;" +
-                       "o.rayDirection.xyz = o.rayDirection.xzy;";
-            case MNeRFScene.Fern:
-            case MNeRFScene.Flower:
-            case MNeRFScene.Fortress:
-            case MNeRFScene.Horns:
-            case MNeRFScene.Leaves:
-            case MNeRFScene.Orchids:
-            case MNeRFScene.Room:
-            case MNeRFScene.Trex:
-                // Forward-facing scenes
-                return "o.rayDirection.x = -o.rayDirection.x;";
-            case MNeRFScene.Bicycle:
-            case MNeRFScene.Gardenvase:
-            case MNeRFScene.Stump:
-                // Unbounded 360° scenes
-                return "o.rayDirection.xz = -o.rayDirection.xz;" +
-                       "o.rayDirection.xyz = o.rayDirection.xzy;";
-
-            default:
-                return "";
-        }
     }
 }
