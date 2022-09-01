@@ -206,8 +206,19 @@ public class MobileNeRFImporter {
         return path;
     }
 
-    private static string GetObjAssetPath(string objName, int i, int j) {
-        string path = $"{GetBasePath(objName)}/OBJs/shape{i}_{j}.obj";
+    private static string GetObjBaseAssetPath(string objName) {
+        string path = $"{GetBasePath(objName)}/OBJs/";
+        Directory.CreateDirectory(Path.GetDirectoryName(path));
+        return path;
+    }
+
+    private static string GetObjAssetPath(string objName, int i, int j, bool splitShapes) {
+        string path;
+        if (splitShapes) {
+            path = $"{GetBasePath(objName)}/OBJs/shape{i}_{j}.obj";
+        } else {
+            path = $"{GetBasePath(objName)}/OBJs/shape{i}.obj";
+        }
         Directory.CreateDirectory(Path.GetDirectoryName(path));
         return path;
     }
@@ -218,8 +229,13 @@ public class MobileNeRFImporter {
         return path;
     }
 
-    private static string GetDefaultMaterialAssetPath(string objName, int i, int j) {
-        string path = $"{GetBasePath(objName)}/OBJs/Materials/shape{i}_{j}-defaultMat.mat";
+    private static string GetDefaultMaterialAssetPath(string objName, int i, int j, bool splitShapes) {
+        string path;
+        if (splitShapes) {
+            path = $"{GetBasePath(objName)}/OBJs/Materials/shape{i}_{j}-defaultMat.mat";
+        } else {
+            path = $"{GetBasePath(objName)}/OBJs/Materials/shape{i}-defaultMat.mat";
+        }
         Directory.CreateDirectory(Path.GetDirectoryName(path));
         return path;
     }
@@ -395,18 +411,29 @@ public class MobileNeRFImporter {
     /// </summary>
     private static bool CopyOBJsFromPath(string path, Mlp mlp) {
         string objName = new DirectoryInfo(path).Name;
-        int totalOBJs = mlp.ObjNum * 8;
 
-        string[] objPaths = Directory.GetFiles(path, "shape*_*.obj", SearchOption.TopDirectoryOnly);
-        if (objPaths.Length != totalOBJs) {
-            EditorUtility.DisplayDialog(ImportErrorTitle, $"Invalid number of 3D models found. Expected: {mlp.ObjNum}. Actual: {objPaths.Length}", OK);
+        string[] objPaths = Directory.GetFiles(path, "shape*.obj", SearchOption.TopDirectoryOnly);
+        bool splitShapes = AreOBJsSplit(path);
+        int numSplitShapes = GetNumSplitShapes(splitShapes);
+
+        if (splitShapes && objPaths.Length != mlp.ObjNum * 8) {
+            EditorUtility.DisplayDialog(ImportErrorTitle, $"Invalid number of shape files found. Expected: {mlp.ObjNum * 8}. Actual: {objPaths.Length}", OK);
+            return false;
+        } else if (!splitShapes && objPaths.Length != mlp.ObjNum) {
+            EditorUtility.DisplayDialog(ImportErrorTitle, $"Invalid number of shape files found. Expected: {mlp.ObjNum    }. Actual: {objPaths.Length}", OK);
             return false;
         }
 
         for (int i = 0; i < mlp.ObjNum; i++) {
-            for (int j = 0; j < 8; j++) {
-                string objPath = Path.Combine(path, $"shape{i}_{j}.obj");
-                string objAssetPath = GetObjAssetPath(objName, i, j);
+            for (int j = 0; j < numSplitShapes; j++) {
+                string objPath;
+                if (splitShapes) {
+                    objPath = Path.Combine(path, $"shape{i}_{j}.obj");
+                } else {
+                    objPath = Path.Combine(path, $"shape{i}.obj");
+                }
+
+                string objAssetPath = GetObjAssetPath(objName, i, j, splitShapes);
 
                 if (!File.Exists(objPath)) {
                     EditorUtility.DisplayDialog(ImportErrorTitle, $"Required .obj file not found: {objPath}", OK);
@@ -424,6 +451,20 @@ public class MobileNeRFImporter {
         return true;
     }
 
+    private static bool AreOBJsSplit(string path) {
+        if (Directory.GetFiles(path, "shape*_*.obj", SearchOption.TopDirectoryOnly).Length > 0) {
+            return true;
+        } else if (Directory.GetFiles(path, "shape*.obj", SearchOption.TopDirectoryOnly).Length > 0) {
+            return false;
+        } else {
+            return false;
+        }
+    }
+
+    private static int GetNumSplitShapes(bool splitShapes) {
+        return splitShapes ? 8 : 1;
+    }
+
     /// <summary>
     /// Downloads the 3D models for the given MobileNeRF demo scene.
     /// </summary>
@@ -431,7 +472,7 @@ public class MobileNeRFImporter {
         for (int i = 0; i < mlp.ObjNum; i++) {
             for (int j = 0; j < 8; j++) {
                 string objUrl = GetOBJUrl(scene, i, j);
-                string objAssetPath = GetObjAssetPath(scene.String(), i, j);
+                string objAssetPath = GetObjAssetPath(scene.String(), i, j, splitShapes: true);
 
                 if (File.Exists(objAssetPath)) {
                     continue;
@@ -444,20 +485,17 @@ public class MobileNeRFImporter {
     }
 
     private static void ProcessOBJs(string objName, Mlp mlp) {
-        for (int i = 0; i < mlp.ObjNum; i++) {
-            for (int j = 0; j < 8; j++) {
-                string objAssetPath = GetObjAssetPath(objName, i, j);
+        bool splitShapes = AreOBJsSplit(GetObjBaseAssetPath(objName));
+        int numSplitShapes = GetNumSplitShapes(splitShapes);
 
-                // model settings - one material per shape (each has individual feature textures)
-                ModelImporter modelImport = AssetImporter.GetAtPath(objAssetPath) as ModelImporter;
-                modelImport.materialLocation = ModelImporterMaterialLocation.External;
-                modelImport.materialName = ModelImporterMaterialName.BasedOnModelNameAndMaterialName;
-                AssetDatabase.ImportAsset(objAssetPath);
+        for (int i = 0; i < mlp.ObjNum; i++) {
+            for (int j = 0; j < numSplitShapes; j++) {
+                string objAssetPath = GetObjAssetPath(objName, i, j, splitShapes);
 
                 // create material
                 string shaderAssetPath = GetShaderAssetPath(objName);
                 Shader mobileNeRFShader = AssetDatabase.LoadAssetAtPath<Shader>(shaderAssetPath);
-                string materialAssetPath = GetDefaultMaterialAssetPath(objName, i, j);
+                string materialAssetPath = GetDefaultMaterialAssetPath(objName, i, j, splitShapes);
                 Material material = AssetDatabase.LoadAssetAtPath<Material>(materialAssetPath);
                 material.shader = mobileNeRFShader;
 
@@ -573,10 +611,12 @@ public class MobileNeRFImporter {
     }
 
     private static void CreatePrefab(string objName, Mlp mlp) {
+        bool splitShapes = AreOBJsSplit(GetObjBaseAssetPath(objName));
+        int numSplitShapes = GetNumSplitShapes(splitShapes);
         GameObject prefabObject = new GameObject(objName);
         for (int i = 0; i < mlp.ObjNum; i++) {
-            for (int j = 0; j < 8; j++) {
-                GameObject shapeModel = AssetDatabase.LoadAssetAtPath<GameObject>(GetObjAssetPath(objName, i, j));
+            for (int j = 0; j < numSplitShapes; j++) {
+                GameObject shapeModel = AssetDatabase.LoadAssetAtPath<GameObject>(GetObjAssetPath(objName, i, j, splitShapes));
                 GameObject shape = GameObject.Instantiate(shapeModel);
                 shape.name = shape.name.Replace("(Clone)", "");
                 shape.transform.SetParent(prefabObject.transform, false);

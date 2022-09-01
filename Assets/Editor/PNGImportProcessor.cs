@@ -8,7 +8,7 @@ using UnityEngine;
 public class PNGImportProcessor : AssetPostprocessor {
     
     private void OnPreprocessTexture() {
-        Regex featureTexturePattern = new Regex("shape[0-9].pngfeat[0-9].png");
+        Regex featureTexturePattern = new Regex(@"shape[0-9].pngfeat[0-9]\.png");
         if (featureTexturePattern.IsMatch(assetPath)) {
             TextureImporter textureImporter = assetImporter as TextureImporter;
             textureImporter.maxTextureSize = 4096;
