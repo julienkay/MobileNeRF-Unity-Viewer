@@ -33,7 +33,7 @@ The project was created with Unity 2021.3 LTS using the Built-in Render Pipeline
 
 The biggest deviation from the official viewer is, that this project doesn't use Deferred Rendering, but uses Forward Rendering instead.
 This has certain implications on performance.
-While the MobileNeRF representation itself greatly reduces the cost to render NeRFs, it still requires evaluating a small, view-dependent MLP (Msta) per fragment. Whenever the bottleneck is in the fragment shader, Deferred Rendering has obvious advantages, as each pixel only needs to run a single fragment shader. 
+While the MobileNeRF representation itself greatly reduces the cost to render NeRFs, it still requires evaluating a small, view-dependent MLP (Multi Layer Perceptron) per fragment. Whenever the bottleneck is in the fragment shader, Deferred Rendering has obvious advantages, as each pixel only needs to run a single fragment shader. 
 
 Forward Rendering however gives us MSAA, which is important for VR use cases. Additionally, in VR the image has to be rendered twice, once for each eye, with a fairly large resolution. The larger the G-buffer, the smaller the benefit of Deferred Rendering. Still, MobileNeRFs mesh representations have a fairly large poly count which works against us using Forward Rendering here. 
 
