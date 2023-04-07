@@ -1,6 +1,6 @@
 # MobileNeRF Unity Viewer
 
-![MobileNeRF Unity Viewer](/images/MobileNeRF_Unity.gif)
+![MobileNeRF Unity Viewer](https://user-images.githubusercontent.com/26555424/230574173-4f6ed62e-2c58-4b90-a350-378df73b97c8.gif)
 
 This repository contains the source code for a Unity port of the web viewer from the paper [MobileNeRF: Exploiting the Polygon Rasterization Pipeline for Efficient Neural Field Rendering on Mobile Architectures](https://mobile-nerf.github.io/)
 
