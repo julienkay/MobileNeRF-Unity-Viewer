@@ -129,6 +129,10 @@ public static class ViewDependenceNetworkShader {
                 fragColor.rgb = evaluateNetwork(diffuse0,diffuse1,rayDir);
                 fragColor.a = 1.0;
 
+                #if(!UNITY_COLORSPACE_GAMMA)
+                    fragColor.rgb = GammaToLinearSpace(fragColor.rgb);
+                #endif
+
                 return fragColor;
             }
             ENDCG
