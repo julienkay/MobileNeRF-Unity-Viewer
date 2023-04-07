@@ -1,6 +1,6 @@
 {
    "name": "com.doji.mobilenerf",
-   "version": "1.0.0",
+   "version": "1.0.1",
    "displayName": "MobileNeRF",
    "description": "An unofficial Unity port of the MobileNeRF viewer.",
    "dependencies":
