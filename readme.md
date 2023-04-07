@@ -6,18 +6,44 @@ This repository contains the source code for a Unity port of the web viewer from
 
 *Please note, that this is an unofficial port. I am not affiliated with the original authors or their institution.*
 
-## Setup
+## Usage
 
-After cloning the project you can simply use the menu *MobileNeRF -> Asset Downloads* to download any of the sample scenes available.
+### Installation
+
+Go to the [releases section](https://github.com/julienkay/MobileNeRF-Unity-Viewer/releases/latest), download the Unity Package, and import it into any Unity project. This is a 'Hybrid Package' that will install into your project as a local package.
+
+##### Alternatives
+
+<details>
+  <summary> UPM Package via OpenUPM </summary>
+  
+  In `Edit -> Project Settings -> Package Manager`, add a new scoped registry:
+
+    Name: Doji
+    URL: https://package.openupm.com
+    Scope(s): com.doji
+ 
+  In the Package Manager install 'com.doji.mobilenerf either by name or via `Package Manager -> My Registries`
+</details>
+
+<details>
+  <summary> UPM Package via Git URL </summary>
+  
+  In `Package Manager -> Add package from git URL...` paste `https://github.com/julienkay/MobileNeRF-Unity-Viewer` [as described here](https://docs.unity3d.com/Manual/upm-ui-giturl)
+</details>
+
+### Importing sample scenes
+
+After succesful installation, you can use the menu *MobileNeRF -> Asset Downloads* to download any of the sample scenes available.
 In each scene folder there will be a convenient prefab, that you can then drag into the scene and you're good to go.
 
-## Updating
+### Updating
 
 Since the initial release a small number of features have been added to the automatic shader generation code.
 That means, that if you have already downloaded some scenes before, you'll have to regenerate the source files by going to *MobileNeRF -> Asset Downloads* again.
 (This will not actually redownload Assets unless necessary, so this shouldn't take too long)
 
-## Importing self-trained scenes
+### Importing self-trained scenes
 
 If you have successfully trained your own MobileNeRF scenes using the [official code release](https://github.com/google-research/jax3d/tree/main/jax3d/projects/mobilenerf) and want to render them in Unity, you can use the menu *MobileNeRF -> Import from disk*.
 This lets you choose a folder that should contain all the output files of your training process.
