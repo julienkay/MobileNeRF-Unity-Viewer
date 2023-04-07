@@ -2,7 +2,7 @@
 
 ![MobileNeRF Unity Viewer](https://user-images.githubusercontent.com/26555424/230574173-4f6ed62e-2c58-4b90-a350-378df73b97c8.gif)
 
-This repository contains the source code for a Unity port of the web viewer from the paper [MobileNeRF: Exploiting the Polygon Rasterization Pipeline for Efficient Neural Field Rendering on Mobile Architectures](https://mobile-nerf.github.io/)
+This repository contains the source code for a Unity port of the web viewer from the paper [MobileNeRF: Exploiting the Polygon Rasterization Pipeline for Efficient Neural Field Rendering on Mobile Architectures](https://mobile-nerf.github.io/)[^1]
 
 *Please note, that this is an unofficial port. I am not affiliated with the original authors or their institution.*
 
@@ -67,5 +67,6 @@ Some things to possibly look into:
 * Forward Rendering, but do a Depth Prepass to reduce overdraw (might require URP, see [here](https://forum.unity.com/threads/need-clarification-on-urps-use-of-the-depth-prepass.1004577/) and [here](https://gist.github.com/aras-p/5e3aa6f81c543ca74e3ae296c72ffcaf))
 * Implement Deferred Rendering and compare performance in various scenarios
 
+More details can be found in the official paper linked below.
 
-For more details read the official paper here: https://mobile-nerf.github.io/
+[^1]: [Zhiqin Chen and Thomas Funkhouser and Peter Hedman and Andrea Tagliasacchi. MobileNeRF: Exploiting the Polygon Rasterization Pipeline for Efficient Neural Field Rendering on Mobile Architectures. arXiv preprint arXiv:2208.00277, 2021](https://mobile-nerf.github.io/)
