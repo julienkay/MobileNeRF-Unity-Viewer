@@ -16,7 +16,7 @@ public class PNGImportProcessor : AssetPostprocessor {
             textureImporter.sRGBTexture = false;
             textureImporter.filterMode = FilterMode.Point;
             textureImporter.mipmapEnabled = false;
-            textureImporter.alphaIsTransparency = true;
+            textureImporter.alphaIsTransparency = false;
         }
     }
 }
