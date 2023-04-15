@@ -69,4 +69,4 @@ Some things to possibly look into:
 
 More details can be found in the official paper linked below.
 
-[^1]: [Zhiqin Chen and Thomas Funkhouser and Peter Hedman and Andrea Tagliasacchi. MobileNeRF: Exploiting the Polygon Rasterization Pipeline for Efficient Neural Field Rendering on Mobile Architectures. arXiv preprint arXiv:2208.00277, 2021](https://mobile-nerf.github.io/)
+[^1]: [Zhiqin Chen and Thomas Funkhouser and Peter Hedman and Andrea Tagliasacchi. MobileNeRF: Exploiting the Polygon Rasterization Pipeline for Efficient Neural Field Rendering on Mobile Architectures. arXiv preprint arXiv:2208.00277, 2022](https://mobile-nerf.github.io/)
