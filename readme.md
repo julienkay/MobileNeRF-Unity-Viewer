@@ -34,13 +34,13 @@ Go to the [releases section](https://github.com/julienkay/MobileNeRF-Unity-Viewe
 
 ### Importing sample scenes
 
-After succesful installation, you can use the menu *MobileNeRF -> Asset Downloads* to download any of the sample scenes available.
+After succesful installation, you can use the menu `MobileNeRF -> Asset Downloads` to download any of the sample scenes available.
 In each scene folder there will be a convenient prefab, that you can then drag into the scene and you're good to go.
 
 ### Updating
 
 Since the initial release a small number of features have been added to the automatic shader generation code.
-That means, that if you have already downloaded some scenes before, you'll have to regenerate the source files by going to *MobileNeRF -> Asset Downloads* again.
+That means, that if you have already downloaded some scenes before, you'll have to regenerate the source files by going to `MobileNeRF -> Asset Downloads` again.
 (This will not actually redownload Assets unless necessary, so this shouldn't take too long)
 
 ### Importing self-trained scenes
@@ -67,6 +67,14 @@ Some things to possibly look into:
 * Forward Rendering, but do a Depth Prepass to reduce overdraw (might require URP, see [here](https://forum.unity.com/threads/need-clarification-on-urps-use-of-the-depth-prepass.1004577/) and [here](https://gist.github.com/aras-p/5e3aa6f81c543ca74e3ae296c72ffcaf))
 * Implement Deferred Rendering and compare performance in various scenarios
 
-More details can be found in the official paper linked below.
+## Known Issues
+
+- Does not work well with MSAA. For now, I recommend turning MSAA off in `Project Settings -> Quality -> Anti Aliasing`
+
+## Acknowledgements
+
+Thanks to
+
+- [@mrxz](https://github.com/mrxz) for providing some major performance optimizations as part of his [WebXR port](https://github.com/mrxz/mobilenerf-viewer-webxr)
 
 [^1]: [Zhiqin Chen and Thomas Funkhouser and Peter Hedman and Andrea Tagliasacchi. MobileNeRF: Exploiting the Polygon Rasterization Pipeline for Efficient Neural Field Rendering on Mobile Architectures. arXiv preprint arXiv:2208.00277, 2022](https://mobile-nerf.github.io/)
