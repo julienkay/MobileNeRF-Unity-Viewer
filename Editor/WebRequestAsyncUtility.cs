@@ -142,7 +142,11 @@ public static class WebRequestAsyncUtility {
                 webRequest = UnityWebRequest.Get(url);
                 break;
             case HTTPVerb.POST:
+#if UNITY_2022_2_OR_NEWER
+                webRequest = UnityWebRequest.PostWwwForm(url, postData);
+#else
                 webRequest = UnityWebRequest.Post(url, postData);
+#endif
                 byte[] rawBody = Encoding.UTF8.GetBytes(postData);
                 webRequest.uploadHandler = new UploadHandlerRaw(rawBody);
                 webRequest.downloadHandler = new DownloadHandlerBuffer();

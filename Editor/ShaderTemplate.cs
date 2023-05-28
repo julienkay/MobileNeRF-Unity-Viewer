@@ -3,9 +3,6 @@ public static class ViewDependenceNetworkShader {
     Properties {
         tDiffuse0x (""Diffuse Texture 0"", 2D) = ""white"" {}
         tDiffuse1x (""Diffuse Texture 1"", 2D) = ""white"" {}
-        weightsZero (""Weights Zero"", 2D) = ""white"" {}
-        weightsOne (""Weights One"", 2D) = ""white"" {}
-        weightsTwo (""Weights Two"", 2D) = ""white"" {}
     }
 
     CGINCLUDE
@@ -41,66 +38,68 @@ public static class ViewDependenceNetworkShader {
 
     sampler2D tDiffuse0x;
     sampler2D tDiffuse1x;
-    sampler2D tDiffuse2x;
-
-    UNITY_DECLARE_TEX2D(weightsZero);
-    UNITY_DECLARE_TEX2D(weightsOne);
-    UNITY_DECLARE_TEX2D(weightsTwo);
 
     half3 evaluateNetwork(fixed4 f0, fixed4 f1, fixed4 viewdir) {
-        half intermediate_one[NUM_CHANNELS_ONE] = { BIAS_LIST_ZERO };
-        int i = 0;
-        int j = 0;
-
-        for (j = 0; j < NUM_CHANNELS_ZERO; ++j) {
-            half input_value = 0.0;
-            if (j < 4) {
-            input_value =
-                (j == 0) ? f0.r : (
-                (j == 1) ? f0.g : (
-                (j == 2) ? f0.b : f0.a));
-            } else if (j < 8) {
-            input_value =
-                (j == 4) ? f1.r : (
-                (j == 5) ? f1.g : (
-                (j == 6) ? f1.b : f1.a));
-            } else {
-            input_value =
-                (j == 8) ? viewdir.r : (
-                (j == 9) ? viewdir.g : viewdir.b);
-            }
-            for (i = 0; i < NUM_CHANNELS_ONE; ++i) {
-            intermediate_one[i] += input_value * weightsZero.Load(int3(j, i, 0)).x;
-            }
-        }
-
-        half intermediate_two[NUM_CHANNELS_TWO] = { BIAS_LIST_ONE };
-
-        for (j = 0; j < NUM_CHANNELS_ONE; ++j) {
-            if (intermediate_one[j] <= 0.0) {
-                continue;
-            }
-            for (i = 0; i < NUM_CHANNELS_TWO; ++i) {
-                intermediate_two[i] += intermediate_one[j] * weightsOne.Load(int3(j, i, 0)).x;
-            }
-        }
-
-        half result[NUM_CHANNELS_THREE] = { BIAS_LIST_TWO };
-
-        for (j = 0; j < NUM_CHANNELS_TWO; ++j) {
-            if (intermediate_two[j] <= 0.0) {
-                continue;
-            }
-            for (i = 0; i < NUM_CHANNELS_THREE; ++i) {
-                result[i] += intermediate_two[j] * weightsTwo.Load(int3(j, i, 0)).x;
-            }
-        }
-        for (i = 0; i < NUM_CHANNELS_THREE; ++i) {
-            result[i] = 1.0 / (1.0 + exp(-result[i]));
-        }
-        return half3(result[0]*viewdir.a+(1.0-viewdir.a),
-                    result[1]*viewdir.a+(1.0-viewdir.a),
-                    result[2]*viewdir.a+(1.0-viewdir.a));
+        float4x4 intermediate_one = { BIAS_LIST_ZERO };
+        intermediate_one += f0.r * float4x4(__W0_0__)
+            + f0.g * float4x4(__W0_1__)
+            + f0.b * float4x4(__W0_2__)
+            + f0.a * float4x4(__W0_3__)
+            + f1.r * float4x4(__W0_4__)
+            + f1.g * float4x4(__W0_5__)
+            + f1.b * float4x4(__W0_6__)
+            + f1.a * float4x4(__W0_7__)
+            + viewdir.r * float4x4(__W0_8__)
+            + viewdir.g * float4x4(__W0_9__)
+            + viewdir.b * float4x4(__W0_10__);
+        intermediate_one[0] = max(intermediate_one[0], 0.0);
+        intermediate_one[1] = max(intermediate_one[1], 0.0);
+        intermediate_one[2] = max(intermediate_one[2], 0.0);
+        intermediate_one[3] = max(intermediate_one[3], 0.0);
+        float4x4 intermediate_two = float4x4(
+            BIAS_LIST_ONE
+        );
+        intermediate_two += intermediate_one[0][0] * float4x4(__W1_0__)
+            + intermediate_one[0][1] * float4x4(__W1_1__)
+            + intermediate_one[0][2] * float4x4(__W1_2__)
+            + intermediate_one[0][3] * float4x4(__W1_3__)
+            + intermediate_one[1][0] * float4x4(__W1_4__)
+            + intermediate_one[1][1] * float4x4(__W1_5__)
+            + intermediate_one[1][2] * float4x4(__W1_6__)
+            + intermediate_one[1][3] * float4x4(__W1_7__)
+            + intermediate_one[2][0] * float4x4(__W1_8__)
+            + intermediate_one[2][1] * float4x4(__W1_9__)
+            + intermediate_one[2][2] * float4x4(__W1_10__)
+            + intermediate_one[2][3] * float4x4(__W1_11__)
+            + intermediate_one[3][0] * float4x4(__W1_12__)
+            + intermediate_one[3][1] * float4x4(__W1_13__)
+            + intermediate_one[3][2] * float4x4(__W1_14__)
+            + intermediate_one[3][3] * float4x4(__W1_15__);
+        intermediate_two[0] = max(intermediate_two[0], 0.0);
+        intermediate_two[1] = max(intermediate_two[1], 0.0);
+        intermediate_two[2] = max(intermediate_two[2], 0.0);
+        intermediate_two[3] = max(intermediate_two[3], 0.0);
+        float3 result = float3(
+            BIAS_LIST_TWO
+        );
+        result += intermediate_two[0][0] * float3(__W2_0__)
+                + intermediate_two[0][1] * float3(__W2_1__)
+                + intermediate_two[0][2] * float3(__W2_2__)
+                + intermediate_two[0][3] * float3(__W2_3__)
+                + intermediate_two[1][0] * float3(__W2_4__)
+                + intermediate_two[1][1] * float3(__W2_5__)
+                + intermediate_two[1][2] * float3(__W2_6__)
+                + intermediate_two[1][3] * float3(__W2_7__)
+                + intermediate_two[2][0] * float3(__W2_8__)
+                + intermediate_two[2][1] * float3(__W2_9__)
+                + intermediate_two[2][2] * float3(__W2_10__)
+                + intermediate_two[2][3] * float3(__W2_11__)
+                + intermediate_two[3][0] * float3(__W2_12__)
+                + intermediate_two[3][1] * float3(__W2_13__)
+                + intermediate_two[3][2] * float3(__W2_14__)
+                + intermediate_two[3][3] * float3(__W2_15__);
+		result = 1.0 / (1.0 + exp(-result));
+        return result*viewdir.a+(1.0-viewdir.a);
     }
     ENDCG
 
@@ -120,10 +119,9 @@ public static class ViewDependenceNetworkShader {
                 fixed4 diffuse1 = tex2D( tDiffuse1x, i.uv );
                 fixed4 rayDir = fixed4(normalize(i.rayDirection), 1.0);
 
-                //deal with iphone
-                diffuse0.a = diffuse0.a*2.0-1.0;
-                diffuse1.a = diffuse1.a*2.0-1.0;
-                rayDir.a = rayDir.a*2.0-1.0;
+                // normalize range to [-1, 1]
+                diffuse0.a = diffuse0.a * 2.0 - 1.0;
+                diffuse1.a = diffuse1.a * 2.0 - 1.0;
 
                 fixed4 fragColor;
                 fragColor.rgb = evaluateNetwork(diffuse0,diffuse1,rayDir);

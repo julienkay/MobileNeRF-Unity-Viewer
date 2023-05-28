@@ -45,7 +45,7 @@ public static class MNeRFSceneExtensions {
             case MNeRFScene.Custom:
                 // Based on user feedback for custom scenes
                 if (MobileNeRFImporter.SwizzleAxis) {
-                    return "o.rayDirection.xz = -o.rayDirection.xz;" +
+                    return "o.rayDirection.xz = -o.rayDirection.xz;" + Environment.NewLine +
                            "o.rayDirection.xyz = o.rayDirection.xzy;";
                 } else {
                     return "o.rayDirection.x = -o.rayDirection.x;";

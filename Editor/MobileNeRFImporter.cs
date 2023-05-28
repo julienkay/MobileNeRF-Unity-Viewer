@@ -4,7 +4,6 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
 using static WebRequestAsyncUtility;
@@ -74,7 +73,7 @@ public class MobileNeRFImporter {
             }
         }
 
-        // ask for axis siwtch behaviour
+        // ask for axis switch behaviour
         if (EditorUtility.DisplayDialog(SwitchAxisTitle, SwitchAxisMsg, Switch, NoSwitch)) {
             SwizzleAxis = true;
         } else {
@@ -165,7 +164,7 @@ public class MobileNeRFImporter {
 
     /// <summary>
     /// Some scenes require switching the y and z axis in the shader.
-    /// For custom scenes this tracks whether which one should be used.
+    /// For custom scenes this tracks, which one should be used.
     /// </summary>
     public static bool SwizzleAxis = false;
 
@@ -190,12 +189,6 @@ public class MobileNeRFImporter {
 
     private static string GetMLPAssetPath(string objName) {
         string path = $"{GetBasePath(objName)}/MLP/{objName}.asset";
-        Directory.CreateDirectory(Path.GetDirectoryName(path));
-        return path;
-    }
-    
-    private static string GetWeightsAssetPath(string objName, int i) {
-        string path = $"{GetBasePath(objName)}/MLP/weightsTex{i}.asset";
         Directory.CreateDirectory(Path.GetDirectoryName(path));
         return path;
     }
@@ -297,13 +290,12 @@ public class MobileNeRFImporter {
 
     /// <summary>
     /// Set specific import settings on OBJs/PNGs.
-    /// Creates Weight Textures, Materials and Shader from MLP data.
+    /// Creates Materials and Shader from MLP data.
     /// Creates a convenient prefab for the MobileNeRF object.
     /// </summary>
     private static void ProcessAssets(string objName) {
         Mlp mlp = GetMlp(objName);
         CreateShader(objName, mlp);
-        CreateWeightTextures(objName, mlp);
         // PNGs are configured in PNGImportProcessor.cs
         ProcessOBJs(objName, mlp);
         CreatePrefab(objName, mlp);
@@ -499,14 +491,6 @@ public class MobileNeRFImporter {
                 Material material = AssetDatabase.LoadAssetAtPath<Material>(materialAssetPath);
                 material.shader = mobileNeRFShader;
 
-                // assign weight textures
-                Texture2D weightsTexZero = AssetDatabase.LoadAssetAtPath<Texture2D>(GetWeightsAssetPath(objName, 0));
-                Texture2D weightsTexOne = AssetDatabase.LoadAssetAtPath<Texture2D>(GetWeightsAssetPath(objName, 1));
-                Texture2D weightsTexTwo = AssetDatabase.LoadAssetAtPath<Texture2D>(GetWeightsAssetPath(objName, 2));
-                material.SetTexture("weightsZero", weightsTexZero);
-                material.SetTexture("weightsOne", weightsTexOne);
-                material.SetTexture("weightsTwo", weightsTexTwo);
-
                 // assign feature textures
                 string feat0AssetPath = GetFeatureTextureAssetPath(objName, i, 0);
                 string feat1AssetPath = GetFeatureTextureAssetPath(objName, i, 1);
@@ -528,24 +512,25 @@ public class MobileNeRFImporter {
     private static void CreateShader(string objName, Mlp mlp) {
         int width = mlp._0Bias.Length;
 
-        StringBuilder biasListZero = toBiasList(mlp._0Bias);
-        StringBuilder biasListOne  = toBiasList(mlp._1Bias);
-        StringBuilder biasListTwo  = toBiasList(mlp._2Bias);
-
-        int channelsZero  = mlp._0Weights.Length;
-        int channelsOne   = mlp._0Bias.Length;
-        int channelsTwo   = mlp._1Bias.Length;
-        int channelsThree = mlp._2Bias.Length;
+        StringBuilder biasListZero = toConstructorList(mlp._0Bias);
+        StringBuilder biasListOne  = toConstructorList(mlp._1Bias);
+        StringBuilder biasListTwo  = toConstructorList(mlp._2Bias);
 
         string shaderSource = ViewDependenceNetworkShader.Template;
         shaderSource = new Regex("OBJECT_NAME"       ).Replace(shaderSource, $"{objName}");
-        shaderSource = new Regex("NUM_CHANNELS_ZERO" ).Replace(shaderSource, $"{channelsZero}");
-        shaderSource = new Regex("NUM_CHANNELS_ONE"  ).Replace(shaderSource, $"{channelsOne}");
-        shaderSource = new Regex("NUM_CHANNELS_TWO"  ).Replace(shaderSource, $"{channelsTwo}");
-        shaderSource = new Regex("NUM_CHANNELS_THREE").Replace(shaderSource, $"{channelsThree}");
         shaderSource = new Regex("BIAS_LIST_ZERO"    ).Replace(shaderSource, $"{biasListZero}");
         shaderSource = new Regex("BIAS_LIST_ONE"     ).Replace(shaderSource, $"{biasListOne}");
         shaderSource = new Regex("BIAS_LIST_TWO"     ).Replace(shaderSource, $"{biasListTwo}");
+
+        for (int i = 0; i < mlp._0Weights.Length; i++) {
+            shaderSource = new Regex($"__W0_{i}__").Replace(shaderSource, $"{toConstructorList(mlp._0Weights[i])}");
+        }
+        for (int i = 0; i < mlp._1Weights.Length; i++) {
+            shaderSource = new Regex($"__W1_{i}__").Replace(shaderSource, $"{toConstructorList(mlp._1Weights[i])}");
+        }
+        for (int i = 0; i < mlp._2Weights.Length; i++) {
+            shaderSource = new Regex($"__W2_{i}__").Replace(shaderSource, $"{toConstructorList(mlp._2Weights[i])}");
+        }
 
         // hack way to flip axes depending on scene
         string axisSwizzle = MNeRFSceneExtensions.ToEnum(objName).GetAxisSwizzleString();
@@ -556,52 +541,12 @@ public class MobileNeRFImporter {
         AssetDatabase.Refresh();
     }
 
-    private static void CreateWeightTextures(string objName, Mlp mlp) {
-        Texture2D weightsTexZero = createFloatTextureFromData(mlp._0Weights);
-        Texture2D weightsTexOne  = createFloatTextureFromData(mlp._1Weights);
-        Texture2D weightsTexTwo  = createFloatTextureFromData(mlp._2Weights);
-        AssetDatabase.CreateAsset(weightsTexZero, GetWeightsAssetPath(objName, 0));
-        AssetDatabase.CreateAsset(weightsTexOne,  GetWeightsAssetPath(objName, 1));
-        AssetDatabase.CreateAsset(weightsTexTwo,  GetWeightsAssetPath(objName, 2));
-        AssetDatabase.SaveAssets();
-    }
-
-    /// <summary>
-    /// Creates a float32 texture from an array of floats.
-    /// </summary>
-    private static Texture2D createFloatTextureFromData(double[][] weights) {
-        int width = weights.Length;
-        int height = weights[0].Length;
-
-        Texture2D texture = new Texture2D(width, height, TextureFormat.RFloat, mipChain: false, linear: true);
-        texture.filterMode = FilterMode.Point;
-        texture.wrapMode = TextureWrapMode.Clamp;
-        NativeArray<float> textureData = texture.GetRawTextureData<float>();
-        FillTexture(textureData, weights);
-        texture.Apply();
-
-        return texture;
-    }
-
-    private static void FillTexture(NativeArray<float> textureData, double[][] data) {
-        int width = data.Length;
-        int height = data[0].Length;
-
-        for (int co = 0; co < height; co++) {
-            for (int ci = 0; ci < width; ci++) {
-                int index = co * width + ci;
-                double weight = data[ci][co];
-                textureData[index] = (float)weight;
-            }
-        }
-    }
-
-    private static StringBuilder toBiasList(double[] biases) {
+    private static StringBuilder toConstructorList(double[] list) {
         System.Globalization.CultureInfo culture = System.Globalization.CultureInfo.InvariantCulture;
-        int width = biases.Length;
+        int width = list.Length;
         StringBuilder biasList = new StringBuilder(width * 12);
         for (int i = 0; i < width; i++) {
-            double bias = biases[i];
+            double bias = list[i];
             biasList.Append(bias.ToString("F7", culture));
             if (i + 1 < width) {
                 biasList.Append(", ");
