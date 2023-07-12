@@ -24,6 +24,32 @@ public class MobileNeRFImporter {
     private static readonly string NoSwitch = "Don't Switch";
     private static readonly string ImportErrorTitle = "Error importing MobileNeRF assets";
 
+    [MenuItem("MobileNeRF/Import from disk", false, 0)]
+    public static void ImportAssetsFromDisk() {
+        // select folder with custom data
+        string path = EditorUtility.OpenFolderPanel(FolderTitle, "", "");
+        if (string.IsNullOrEmpty(path) || !Directory.Exists(path)) {
+            return;
+        }
+
+        // ask whether to overwrite existing folder
+        string objName = new DirectoryInfo(path).Name;
+        if (Directory.Exists(GetBasePath(objName))) {
+            if (!EditorUtility.DisplayDialog(FolderExistsTitle, FolderExistsMsg, OK)) {
+                return;
+            }
+        }
+
+        // ask for axis switch behaviour
+        if (EditorUtility.DisplayDialog(SwitchAxisTitle, SwitchAxisMsg, Switch, NoSwitch)) {
+            SwizzleAxis = true;
+        } else {
+            SwizzleAxis = false;
+        }
+
+        ImportCustomScene(path);
+    }
+
     [MenuItem("MobileNeRF/Asset Downloads/-- Synthetic 360° scenes --", false, -1)]
     public static void Separator0() { }
     [MenuItem("MobileNeRF/Asset Downloads/-- Synthetic 360° scenes --", true, -1)]
@@ -55,32 +81,6 @@ public class MobileNeRFImporter {
             }
             await ImportDemoSceneAsync(scene);
         }
-    }
-
-    [MenuItem("MobileNeRF/Import from disk", false, 0)]
-    public static void ImportAssetsFromDisk() {
-        // select folder with custom data
-        string path = EditorUtility.OpenFolderPanel(FolderTitle, "", "");
-        if (string.IsNullOrEmpty(path) || !Directory.Exists(path)) {
-            return;
-        }
-
-        // ask whether to overwrite existing folder
-        string objName = new DirectoryInfo(path).Name;
-        if (Directory.Exists(GetBasePath(objName))) {
-            if (!EditorUtility.DisplayDialog(FolderExistsTitle, FolderExistsMsg, OK)) {
-                return;
-            }
-        }
-
-        // ask for axis switch behaviour
-        if (EditorUtility.DisplayDialog(SwitchAxisTitle, SwitchAxisMsg, Switch, NoSwitch)) {
-            SwizzleAxis = true;
-        } else {
-            SwizzleAxis = false;
-        }
-
-        ImportCustomScene(path);
     }
 
 #pragma warning disable CS4014
