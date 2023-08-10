@@ -29,7 +29,7 @@ Go to the [releases section](https://github.com/julienkay/MobileNeRF-Unity-Viewe
 <details>
   <summary> UPM Package via Git URL </summary>
   
-  In `Package Manager -> Add package from git URL...` paste `https://github.com/julienkay/MobileNeRF-Unity-Viewer` [as described here](https://docs.unity3d.com/Manual/upm-ui-giturl)
+  In `Package Manager -> Add package from git URL...` paste `https://github.com/julienkay/MobileNeRF-Unity-Viewer.git` [as described here](https://docs.unity3d.com/Manual/upm-ui-giturl)
 </details>
 
 ### Importing sample scenes
