@@ -71,10 +71,14 @@ Some things to possibly look into:
 
 - Does not work well with MSAA. For now, I recommend turning MSAA off in `Project Settings -> Quality -> Anti Aliasing`
 
-## Acknowledgements
+## References
 
 Thanks to
 
 - [@mrxz](https://github.com/mrxz) for providing some major performance optimizations as part of his [WebXR port](https://github.com/mrxz/mobilenerf-viewer-webxr)
+
+Other projects exploring NeRFs and related techniques in Unity:
+- [SNeRG (Sparse Neural Radiance Grids)](https://github.com/julienkay/SNeRG-Unity-Viewer)
+- [MERF (Memory Efficient Radiance Fields)](https://github.com/julienkay/MERF-Unity-Viewer)
 
 [^1]: [Zhiqin Chen and Thomas Funkhouser and Peter Hedman and Andrea Tagliasacchi. MobileNeRF: Exploiting the Polygon Rasterization Pipeline for Efficient Neural Field Rendering on Mobile Architectures. arXiv preprint arXiv:2208.00277, 2022](https://mobile-nerf.github.io/)
